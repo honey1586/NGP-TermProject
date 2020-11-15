@@ -15,9 +15,11 @@ using namespace std;
 #define BUFSIZE 1024
 
 #define KEY_NULL '0'
-#define KEY_LEFT '1'
-#define KEY_RIGHT '2'
-#define KEY_SPACE '3'
+#define KEY_DOWN '2'
+#define KEY_LEFT '4'
+#define KEY_RIGHT '6'
+#define KEY_UP '8'
+#define KEY_SPACE '9'
 
 int Window_Size_X = 460;
 int Window_Size_Y = 614;
@@ -73,6 +75,49 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdPa
     }
     return Message.wParam;
 }
+
+class Point {
+public:
+    int x;
+    int y;
+
+    Point() {};
+    Point(int _x, int _y) : x(_x), y(_y) {}
+};
+
+class CMonster {
+public:
+    CImage img;
+    Point pt;
+    bool isActivated;
+    RECT rc;
+    int size = 60;
+
+    CMonster() {}
+    ~CMonster() {}
+
+    //좌표를 설정함, RECT까지
+    void setPos(Point input) {
+        pt = input;
+        rc = RECT{
+             pt.x - size / 2
+            ,pt.y - size / 2
+            ,pt.x + size / 2
+            ,pt.y + size / 2
+        };
+    }
+
+    //is Meet?
+    bool checkRectMeet(RECT target) {
+        RECT temp;
+        return IntersectRect(&temp, &rc, &target);
+    }
+
+    void UnActivated() {
+        isActivated = false;
+        setPos(Point(0, -70));
+    }
+};
 
 #pragma pack(push,1)
 struct KEY {
@@ -135,7 +180,11 @@ struct HP {
 };
 #pragma pack(pop)
 
+#define monsterMax 5
+CMonster monster[monsterMax];
+int MonsterSpawnTick = 110;
 
+bool DrawMonster = false;
 
 CHero hero[2];
 HeroBullet hbullet[2];
@@ -151,6 +200,35 @@ CImage HBullet2;
 
 bool leftMove = false;
 bool rightMove = false;
+
+void MonsterSpawn(int type) {
+    switch (type) {
+    case 1:
+        monster[0].setPos(Point(14, 0));
+        monster[1].setPos(Point(88, 0));
+        monster[2].setPos(Point(162, 0));
+        monster[3].setPos(Point(236, 0));
+        monster[4].setPos(Point(310, 0));
+        break;
+    case 2:
+        monster[0].setPos(Point(14, -30));
+        monster[1].setPos(Point(88, 0));
+        monster[2].setPos(Point(162, -30));
+        monster[3].setPos(Point(236, 0));
+        monster[4].setPos(Point(310, -30));
+        break;
+    case 3:
+        monster[0].setPos(Point(162, 0));
+        monster[1].setPos(Point(162, -70));
+        monster[2].setPos(Point(162, -140));
+        monster[3].setPos(Point(162, -210));
+        monster[4].setPos(Point(162, -280));
+        break;
+    }
+    for (int i = 0; i < monsterMax; ++i) {
+        monster[i].isActivated = true;
+    }
+}
 
 #pragma region 오류 출력 부분
 // 소켓 함수 오류 출력 후 종료
@@ -197,6 +275,9 @@ void ImgLoad() {
     HBullet.Load(TEXT("bullet.png"));
     HBullet2.Load(TEXT("bullet.png"));
 
+    for (int i = 0; i < monsterMax; ++i) {
+        monster[i].img.Load(TEXT("monster.png"));
+    }
 }
 
 void OnDraw(HWND hWnd)
@@ -214,6 +295,11 @@ void OnDraw(HWND hWnd)
     //BG
     imgBackGround.Draw(memDC, 0, 0, 460, 614);
 
+    if (true == hero[0].connect && true == hero[1].connect) {
+        for (int i = 0; i < 5; ++i)
+            monster[i].img.Draw(memDC, monster[i].pt.x, monster[i].pt.y, monster[i].size, monster[i].size);
+    }
+
     // hero draw
     if (true == MyRect)
     {
@@ -221,6 +307,7 @@ void OnDraw(HWND hWnd)
         {
             if (true == hero[i].connect)
             {
+
                 if (keyInfo.id == i)
                 {
                     heroimg.Draw(memDC, hero[i].x, 460, 90, 90);
@@ -292,6 +379,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         //// 백 버퍼 생성
         imgBackBuff.Create(Window_Size_X, Window_Size_Y, 24);
 
+        SetTimer(hWnd, 2, 16, NULL);
         SetTimer(hWnd, 1, 16, NULL);
         break;
     }
@@ -306,6 +394,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #pragma region 타이머
 
     case WM_TIMER:
+
         switch (wParam)
         {
         case 1:
@@ -313,15 +402,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 send(sock, (char*)&keyInfo, sizeof(KEY), 0);
                 recv(sock, (char*)&hero, sizeof(hero), 0);
-                /*keyInfo.cKey = KEY_NULL;*/
-                hbullet[0].y += 1;
-                hbullet[1].y += 2;
             }
-
-
             break;
 
+        case 2:
+            //monster spawn
+            ++MonsterSpawnTick;
+            if (MonsterSpawnTick > 120) {
+                MonsterSpawn(rand() % 3 + 1);
+                MonsterSpawnTick = 0;
+            }
+
+            //monster move
+            for (int i = 0; i < monsterMax; ++i) {
+                if (monster[i].isActivated == true) {
+                    monster[i].setPos(Point(monster[i].pt.x, monster[i].pt.y + 5));
+                }
+                if (monster[i].pt.y >= 614) {
+                    monster[i].UnActivated();
+                }
+            }
         }
+
         InvalidateRect(hWnd, NULL, FALSE);
         break;
 
@@ -354,7 +456,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             keyInfo.cKey = KEY_SPACE;
         }
-
 
         InvalidateRect(hWnd, NULL, FALSE); // FALSE로 하면 이어짐  
         break;

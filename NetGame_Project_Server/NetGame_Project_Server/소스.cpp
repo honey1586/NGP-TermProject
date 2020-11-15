@@ -11,9 +11,11 @@ using namespace std;
 #define BUFSIZE 1024
 
 #define KEY_NULL '0'
-#define KEY_LEFT '1'
-#define KEY_RIGHT '2'
-#define KEY_SPACE '3'
+#define KEY_DOWN '2'
+#define KEY_LEFT '4'
+#define KEY_RIGHT '6'
+#define KEY_UP '8'
+#define KEY_SPACE '9'
 
 
 #define MAX_CLNT 2
@@ -252,7 +254,6 @@ DWORD WINAPI Client_Thread(LPVOID arg)
             exit(1);
         }
     }
-
 
     closesocket(clientSock);//소켓을 종료한다.
     return 0;
