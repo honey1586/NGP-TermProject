@@ -11,10 +11,10 @@ using namespace std;
 #define BUFSIZE 1024
 
 #define KEY_NULL '0'
-#define KEY_DOWN '2'
-#define KEY_LEFT '4'
-#define KEY_RIGHT '6'
-#define KEY_UP '8'
+#define KEY_LEFT '1'
+#define KEY_RIGHT '2'
+#define KEY_SPACE '3'
+
 
 #define MAX_CLNT 2
 DWORD WINAPI Client_Thread(LPVOID arg);
@@ -113,6 +113,15 @@ SOCKET clientSocks[MAX_CLNT];//클라이언트 소켓 보관용 배열
 HANDLE hMutex;//뮤텍스
 KEY keyInfo{ KEY_NULL };
 CHero hero[2];
+HeroBullet hbullet[10];
+
+//void KeyMessage(const char* key, HeroBullet& hbullet) 
+//{
+//    if (KEY_SPACE == *key) 
+//    {
+//        hbullet.y
+//    }
+//}
 
 void KeyMessage(const char* key, CHero& hero)
 {
@@ -121,7 +130,7 @@ void KeyMessage(const char* key, CHero& hero)
         cout << hero.x << endl;
         hero.x += 5;
     }
-    if (KEY_LEFT == *key)
+    else if (KEY_LEFT == *key)
     {
         cout << hero.x << endl;
         hero.x -= 5;
@@ -207,6 +216,7 @@ int main(int argc, char* argv[])
 
 DWORD WINAPI Client_Thread(LPVOID arg)
 {
+    char buf[BUFSIZE];
 
     SOCKET clientSock = *((SOCKET*)arg); //매개변수로받은 클라이언트 소켓을 전달
 
@@ -232,7 +242,10 @@ DWORD WINAPI Client_Thread(LPVOID arg)
             }
         }
 
-        retval = send(clientSock, (char*)&hero, sizeof(hero), 0);
+        memcpy(buf, (char*)&hero, sizeof(hero));
+        retval = send(clientSock, buf, sizeof(hero), 0);
+
+        //      retval = send(clientSock, (char*)&hero, sizeof(hero), 0);
 
         if (retval == SOCKET_ERROR) {
             err_display("send()");
@@ -240,7 +253,7 @@ DWORD WINAPI Client_Thread(LPVOID arg)
         }
     }
 
-    closesocket(clientSock);//소켓을 종료한다.
 
+    closesocket(clientSock);//소켓을 종료한다.
     return 0;
 }
