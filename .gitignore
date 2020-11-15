@@ -101,4 +101,12 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+#기타
+
+*.log
+*.tlog
+*.filters
+*.user
+*.recipe
+
 # End of https://www.toptal.com/developers/gitignore/api/c,c++,windows
