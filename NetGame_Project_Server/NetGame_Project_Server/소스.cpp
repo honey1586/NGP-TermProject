@@ -20,6 +20,7 @@ using namespace std;
 
 #define MAX_CLNT 2
 DWORD WINAPI Client_Thread(LPVOID arg);
+DWORD WINAPI Operation_Thread(LPVOID arg);
 
 #pragma pack(push,1)
 struct KEY {
@@ -113,9 +114,13 @@ void err_display(char* msg)
 int clientCount = -1;
 SOCKET clientSocks[MAX_CLNT];//클라이언트 소켓 보관용 배열
 HANDLE hMutex;//뮤텍스
+HANDLE hReadEvent, hOperEvent;
 KEY keyInfo{ KEY_NULL };
 CHero hero[2];
 HeroBullet hbullet[10];
+char buf[BUFSIZE];
+HANDLE hThread;
+HANDLE hThread2;
 
 //void KeyMessage(const char* key, HeroBullet& hbullet) 
 //{
@@ -143,8 +148,14 @@ int main(int argc, char* argv[])
 {
     // HANDLE hMutex;
     // 뮤텍스
-    HANDLE hThread;
+
     hMutex = CreateMutex(NULL, FALSE, NULL);//하나의 뮤텍스를 생성한다.
+
+    // 이벤트 생성
+    hReadEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+    if (hReadEvent == NULL) return 1;
+    hOperEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (hOperEvent == NULL) return 1;
 
     int retval;
     // 윈속 초기화
@@ -191,7 +202,7 @@ int main(int argc, char* argv[])
             err_display("accept()");
         }
 
-        WaitForSingleObject(hMutex, INFINITE);
+        /*WaitForSingleObject(hMutex, INFINITE);*/
         clientCount++;
         clientSocks[clientCount] = client_sock;
         //hero[clientCount].connect = true;
@@ -202,10 +213,11 @@ int main(int argc, char* argv[])
 
         cout << "접속한 클라 개수 : " << clientCount << endl;
         cout << "hero [" << clientCount << "].id : " << hero[clientCount].id << endl;
-        ReleaseMutex(hMutex);
+        /*ReleaseMutex(hMutex);*/
 
         hThread = CreateThread(NULL, 0, Client_Thread, (LPVOID)&client_sock, 0, NULL);//HandleClient 쓰레드 실행, clientSock을 매개변수로 전달
         printf("Connected Client IP : %s\n", inet_ntoa(clientaddr.sin_addr));
+
     }
 
     // closesocket()
@@ -218,8 +230,6 @@ int main(int argc, char* argv[])
 
 DWORD WINAPI Client_Thread(LPVOID arg)
 {
-    char buf[BUFSIZE];
-
     SOCKET clientSock = *((SOCKET*)arg); //매개변수로받은 클라이언트 소켓을 전달
 
     int retval;
@@ -227,34 +237,34 @@ DWORD WINAPI Client_Thread(LPVOID arg)
 
 
     while (true) {
-        retval = recv(clientSock, (char*)&keyInfo, sizeof(KEY), 0);
-        if (retval == SOCKET_ERROR) {
-            err_display("recv()");
-            exit(1);
-        }
+        WaitForSingleObject(hReadEvent, INFINITE);
+        hThread2 = CreateThread(NULL, 0, Operation_Thread, (LPVOID)&clientSock, 0, NULL);
 
-        for (int i = 0; i < 2; ++i) {
+        recv(clientSock, (char*)&keyInfo, sizeof(KEY), 0);
 
-            if (hero[i].id == 0) {
-                KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
-            }
+        send(clientSock, buf, sizeof(hero), 0);
 
-            if (hero[i].id == 1) {
-                KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
-            }
-        }
-
-        memcpy(buf, (char*)&hero, sizeof(hero));
-        retval = send(clientSock, buf, sizeof(hero), 0);
-
-        //      retval = send(clientSock, (char*)&hero, sizeof(hero), 0);
-
-        if (retval == SOCKET_ERROR) {
-            err_display("send()");
-            exit(1);
-        }
+        SetEvent(hOperEvent);
     }
 
     closesocket(clientSock);//소켓을 종료한다.
+    return 0;
+}
+
+DWORD WINAPI Operation_Thread(LPVOID arg)
+{
+    WaitForSingleObject(hOperEvent, INFINITE);
+    memcpy(buf, (char*)&hero, sizeof(hero));
+    for (int i = 0; i < 2; ++i) {
+
+        if (hero[i].id == 0) {
+            KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
+        }
+
+        if (hero[i].id == 1) {
+            KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
+        }
+    }
+    SetEvent(hReadEvent);
     return 0;
 }
