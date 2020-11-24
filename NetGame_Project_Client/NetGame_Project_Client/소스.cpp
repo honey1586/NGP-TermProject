@@ -14,11 +14,12 @@ using namespace std;
 #define SERVERIP "127.0.0.1"
 #define BUFSIZE 1024
 
-#define KEY_NULL '0'
-#define KEY_DOWN '2'
-#define KEY_LEFT '4'
-#define KEY_RIGHT '6'
-#define KEY_UP '8'
+#define KEY_NULL   '0'
+#define KEY_DOWN   '1'
+#define KEY_LEFT   '2'
+#define KEY_RIGHT  '3'
+#define KEY_UP     '4'
+#define KEY_SPACE  '5'
 
 int Window_Size_X = 460;
 int Window_Size_Y = 614;
@@ -84,7 +85,7 @@ struct KEY {
 
 #pragma pack(push,1)
 struct CHero {
-    short x;
+    short x, y;
     bool connect;
     short id;
     RECT rc;
@@ -145,6 +146,8 @@ CImage imgBackGround;
 CImage imgBackBuff;
 CImage heroimg;
 CImage heroimg2;
+CImage HBullet;
+CImage HBullet2;
 bool leftMove = false;
 bool rightMove = false;
 
@@ -177,6 +180,9 @@ void err_display(char* msg)
 }
 #pragma endregion 오류 출력 부분
 
+#define bulletMax 10
+HeroBullet hbullet[bulletMax];
+
 void ImgLoad() {
     // BG img load
     imgBackGround.Load(TEXT("BG.png"));
@@ -184,6 +190,9 @@ void ImgLoad() {
     // Hero img load
     heroimg.Load(TEXT("hero.png"));
     heroimg2.Load(TEXT("hero2.png"));
+
+    HBullet.Load(TEXT("bullet.png"));
+    HBullet2.Load(TEXT("bullet.png"));
 }
 
 void OnDraw(HWND hWnd)
@@ -211,10 +220,14 @@ void OnDraw(HWND hWnd)
                 if (keyInfo.id == i)
                 {
                     heroimg.Draw(memDC, hero[i].x, 460, 90, 90);
+                    hbullet[i].x = hero[i].x;
+                    HBullet.Draw(memDC, hbullet[i].x, hero[i].y, 64, 64);
                 }
                 else
                 {
                     heroimg2.Draw(memDC, hero[i].x, 460, 90, 90);
+                    hbullet[i].x = hero[i].x;
+                    HBullet2.Draw(memDC, hbullet[i].x, hero[i].y, 64, 64);
                 }
             }
         }
@@ -313,6 +326,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         else if (wParam == VK_LEFT) {
             keyInfo.cKey = KEY_NULL;
         }
+        else if (wParam == VK_SPACE) {
+            keyInfo.cKey = KEY_NULL;
+        }
         break;
 
     case WM_KEYFIRST:
@@ -324,6 +340,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             keyInfo.cKey = KEY_LEFT;
         }
+        else if (wParam == VK_SPACE) 
+        {
+            keyInfo.cKey = KEY_SPACE;
+        }
+
         InvalidateRect(hWnd, NULL, FALSE); // FALSE로 하면 이어짐  
         break;
 #pragma endregion

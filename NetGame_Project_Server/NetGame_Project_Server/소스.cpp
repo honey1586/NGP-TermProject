@@ -10,12 +10,12 @@ using namespace std;
 #define SERVERPORT 9000
 #define BUFSIZE 1024
 
-#define KEY_NULL '0'
-#define KEY_DOWN '2'
-#define KEY_LEFT '4'
-#define KEY_RIGHT '6'
-#define KEY_UP '8'
-#define KEY_SPACE '9'
+#define KEY_NULL   '0'
+#define KEY_DOWN   '1'
+#define KEY_LEFT   '2'
+#define KEY_RIGHT  '3'
+#define KEY_UP     '4'
+#define KEY_SPACE  '5'
 
 
 #define MAX_CLNT 2
@@ -31,7 +31,7 @@ struct KEY {
 
 #pragma pack(push,1)
 struct CHero {
-    short x;
+    short x, y;
     bool connect;
     short id;
     RECT rc;
@@ -142,6 +142,12 @@ void KeyMessage(const char* key, CHero& hero)
         cout << hero.x << endl;
         hero.x -= 5;
     }
+
+    else if (KEY_SPACE == *key) 
+    {
+        cout << hero.y << endl;
+        hero.y -= 5;
+    }
 }
 
 int main(int argc, char* argv[])
@@ -207,7 +213,7 @@ int main(int argc, char* argv[])
         clientSocks[clientCount] = client_sock;
         //hero[clientCount].connect = true;
         //hero[clientCount].id = clientCount;
-        hero[clientCount] = CHero{ 0,true,(short)clientCount,NULL };
+        hero[clientCount] = CHero{ 0,400,true,(short)clientCount,NULL };
         hero[clientCount].id = clientCount;
         send(clientSocks[clientCount], (char*)&hero[clientCount], sizeof(CHero), 0);
 
@@ -255,16 +261,19 @@ DWORD WINAPI Operation_Thread(LPVOID arg)
 {
     WaitForSingleObject(hOperEvent, INFINITE);
     memcpy(buf, (char*)&hero, sizeof(hero));
-    for (int i = 0; i < 2; ++i) {
 
-        if (hero[i].id == 0) {
-            KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
-        }
+    KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
+    //for (int i = 0; i < 2; ++i) {
 
-        if (hero[i].id == 1) {
-            KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
-        }
-    }
+    //    if (hero[i].id == 0) {
+    //        KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
+    //    }
+
+    //    if (hero[i].id == 1) {
+    //        KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
+    //    }
+    //}
+
     SetEvent(hReadEvent);
     return 0;
 }
