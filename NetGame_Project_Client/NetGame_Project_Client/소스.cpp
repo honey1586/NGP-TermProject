@@ -343,6 +343,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         else if (wParam == VK_SPACE) 
         {
             keyInfo.cKey = KEY_SPACE;
+            
         }
 
         InvalidateRect(hWnd, NULL, FALSE); // FALSE로 하면 이어짐  
