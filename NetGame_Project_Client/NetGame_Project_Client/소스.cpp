@@ -21,6 +21,8 @@ using namespace std;
 #define KEY_UP     '4'
 #define KEY_SPACE  '5'
 
+#define bulletMax 10
+
 int Window_Size_X = 460;
 int Window_Size_Y = 614;
 
@@ -101,14 +103,53 @@ struct Monster {
 };
 #pragma pack(pop)
 
-#pragma pack(push,1)
-struct HeroBullet {
-    short x;
-    short y;
-    short id;
-    RECT rc;
+//#pragma pack(push,1)
+//struct HeroBullet {
+//    short x;
+//    short y;
+//    short id;
+//    CImage img;
+//    RECT rc;
+//};
+//#pragma pack(pop)
+class Point {
+public:
+    int x;
+    int y;
+
+    Point() {};
+    Point(int _x, int _y) : x(_x), y(_y) {}
+    //Point(int _x, int _y) : x(_x), y(_y) {}
 };
-#pragma pack(pop)
+class CBullet {
+public:
+    CImage img;
+    Point pt;
+    bool isActivated;
+    RECT rc;
+    int size = 64;
+
+    CBullet() {
+        setPos(Point(0, 614));
+    }
+    ~CBullet() {}
+
+    void UnActivated() {
+        isActivated = false;
+        setPos(Point(0, 614));
+    }
+
+    void setPos(Point input) {
+        pt = input;
+        rc = RECT{
+             pt.x - size / 2
+            ,pt.y - size / 2
+            ,pt.x + size / 2
+            ,pt.y + size / 2
+        };
+    }
+};
+
 
 #pragma pack(push,1)
 struct Boss {
@@ -146,10 +187,12 @@ CImage imgBackGround;
 CImage imgBackBuff;
 CImage heroimg;
 CImage heroimg2;
-CImage HBullet;
-CImage HBullet2;
 bool leftMove = false;
 bool rightMove = false;
+
+CBullet hbullet[bulletMax];
+
+int BulletSpawnTick = 0;
 
 #pragma region 오류 출력 부분
 // 소켓 함수 오류 출력 후 종료
@@ -180,8 +223,6 @@ void err_display(char* msg)
 }
 #pragma endregion 오류 출력 부분
 
-#define bulletMax 10
-HeroBullet hbullet[bulletMax];
 
 void ImgLoad() {
     // BG img load
@@ -191,8 +232,9 @@ void ImgLoad() {
     heroimg.Load(TEXT("hero.png"));
     heroimg2.Load(TEXT("hero2.png"));
 
-    HBullet.Load(TEXT("bullet.png"));
-    HBullet2.Load(TEXT("bullet.png"));
+    for (int i = 0; i < bulletMax; ++i) {
+        hbullet[i].img.Load(TEXT("bullet.png"));
+    }
 }
 
 void OnDraw(HWND hWnd)
@@ -220,17 +262,17 @@ void OnDraw(HWND hWnd)
                 if (keyInfo.id == i)
                 {
                     heroimg.Draw(memDC, hero[i].x, 460, 90, 90);
-                    hbullet[i].x = hero[i].x;
-                    HBullet.Draw(memDC, hbullet[i].x, hero[i].y, 64, 64);
                 }
                 else
                 {
                     heroimg2.Draw(memDC, hero[i].x, 460, 90, 90);
-                    hbullet[i].x = hero[i].x;
-                    HBullet2.Draw(memDC, hbullet[i].x, hero[i].y, 64, 64);
                 }
             }
         }
+    }
+    // bullet draw
+    for (int i = 0; i < bulletMax; ++i) {
+        hbullet[i].img.Draw(memDC, hbullet[i].pt.x, hbullet[i].pt.y,hbullet[i].size, hbullet[i].size);
     }
 
     SetBkMode(memDC, TRANSPARENT);
@@ -289,6 +331,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         imgBackBuff.Create(Window_Size_X, Window_Size_Y, 24);
 
         SetTimer(hWnd, 1, 16, NULL);
+        SetTimer(hWnd, 2, 16, NULL);
         break;
     }
 #pragma endregion
@@ -309,7 +352,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 send(sock, (char*)&keyInfo, sizeof(KEY), 0);
                 recv(sock, (char*)&hero, sizeof(hero), 0);
-                /*keyInfo.cKey = KEY_NULL;*/
+            }
+            break;
+
+        case 2:
+            //bullet spawn
+            ++BulletSpawnTick;
+            if (BulletSpawnTick > 8) {
+                for (int i = 0; i < bulletMax; ++i) {
+                    if (hbullet[i].isActivated == false) {
+                        hbullet[i].isActivated = true;
+                        hbullet[i].setPos(Point(hero[0].x + 15, 400));
+                        break;
+                    }
+                }
+                BulletSpawnTick = 0;
+            }
+
+            //bullet move
+            for (int i = 0; i < bulletMax; ++i) {
+                if (hbullet[i].isActivated == true) {
+                    hbullet[i].setPos(Point(hbullet[i].pt.x, hbullet[i].pt.y - 10));
+                }
+                if (hbullet[i].pt.y <= -10) {
+                    hbullet[i].UnActivated();
+                }
             }
             break;
         }
@@ -332,6 +399,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_KEYFIRST:
+
         if (wParam == VK_RIGHT)
         {
             keyInfo.cKey = KEY_RIGHT;
@@ -343,7 +411,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         else if (wParam == VK_SPACE) 
         {
             keyInfo.cKey = KEY_SPACE;
-            
         }
 
         InvalidateRect(hWnd, NULL, FALSE); // FALSE로 하면 이어짐  
