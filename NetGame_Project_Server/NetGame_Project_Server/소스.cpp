@@ -245,10 +245,7 @@ DWORD WINAPI Client_Thread(LPVOID arg)
     while (true) {
         WaitForSingleObject(hReadEvent, INFINITE);
         hThread2 = CreateThread(NULL, 0, Operation_Thread, (LPVOID)&clientSock, 0, NULL);
-
         recv(clientSock, (char*)&keyInfo, sizeof(KEY), 0);
-
-        send(clientSock, buf, sizeof(hero), 0);
 
         SetEvent(hOperEvent);
     }
@@ -259,21 +256,13 @@ DWORD WINAPI Client_Thread(LPVOID arg)
 
 DWORD WINAPI Operation_Thread(LPVOID arg)
 {
+    SOCKET clientSock = *((SOCKET*)arg); //매개변수로받은 클라이언트 소켓을 전달
     WaitForSingleObject(hOperEvent, INFINITE);
     memcpy(buf, (char*)&hero, sizeof(hero));
 
     KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
-    //for (int i = 0; i < 2; ++i) {
 
-    //    if (hero[i].id == 0) {
-    //        KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
-    //    }
-
-    //    if (hero[i].id == 1) {
-    //        KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
-    //    }
-    //}
-
+    send(clientSock, buf, sizeof(hero), 0);
     SetEvent(hReadEvent);
     return 0;
 }
