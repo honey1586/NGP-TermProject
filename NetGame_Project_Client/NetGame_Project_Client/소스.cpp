@@ -19,8 +19,11 @@ using namespace std;
 #define KEY_LEFT '4'
 #define KEY_RIGHT '6'
 #define KEY_UP '8'
+<<<<<<< HEAD
 
 #define bulletMax 10
+=======
+>>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 
 int Window_Size_X = 460;
 int Window_Size_Y = 614;
@@ -222,7 +225,10 @@ void err_display(char* msg)
 }
 #pragma endregion ���� ��� �κ�
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 void ImgLoad() {
     // BG img load
     imgBackGround.Load(TEXT("BG.png"));
@@ -230,10 +236,13 @@ void ImgLoad() {
     // Hero img load
     heroimg.Load(TEXT("hero.png"));
     heroimg2.Load(TEXT("hero2.png"));
+<<<<<<< HEAD
 
     for (int i = 0; i < bulletMax; ++i) {
         hbullet[i].img.Load(TEXT("bullet.png"));
     }
+=======
+>>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 }
 
 void OnDraw(HWND hWnd)
