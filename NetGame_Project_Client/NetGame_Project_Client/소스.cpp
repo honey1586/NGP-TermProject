@@ -14,12 +14,11 @@ using namespace std;
 #define SERVERIP "127.0.0.1"
 #define BUFSIZE 1024
 
-#define KEY_NULL   '0'
-#define KEY_DOWN   '1'
-#define KEY_LEFT   '2'
-#define KEY_RIGHT  '3'
-#define KEY_UP     '4'
-#define KEY_SPACE  '5'
+#define KEY_NULL '0'
+#define KEY_DOWN '2'
+#define KEY_LEFT '4'
+#define KEY_RIGHT '6'
+#define KEY_UP '8'
 
 #define bulletMax 10
 
@@ -87,7 +86,7 @@ struct KEY {
 
 #pragma pack(push,1)
 struct CHero {
-    short x, y;
+    short x;
     bool connect;
     short id;
     RECT rc;
@@ -393,9 +392,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         else if (wParam == VK_LEFT) {
             keyInfo.cKey = KEY_NULL;
         }
-        else if (wParam == VK_SPACE) {
-            keyInfo.cKey = KEY_NULL;
-        }
         break;
 
     case WM_KEYFIRST:
@@ -408,11 +404,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
             keyInfo.cKey = KEY_LEFT;
         }
-        else if (wParam == VK_SPACE) 
-        {
-            keyInfo.cKey = KEY_SPACE;
-        }
-
         InvalidateRect(hWnd, NULL, FALSE); // FALSE로 하면 이어짐  
         break;
 #pragma endregion

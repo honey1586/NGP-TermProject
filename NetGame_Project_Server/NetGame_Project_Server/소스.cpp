@@ -10,12 +10,12 @@ using namespace std;
 #define SERVERPORT 9000
 #define BUFSIZE 1024
 
-#define KEY_NULL   '0'
-#define KEY_DOWN   '1'
-#define KEY_LEFT   '2'
-#define KEY_RIGHT  '3'
-#define KEY_UP     '4'
-#define KEY_SPACE  '5'
+#define KEY_NULL '0'
+#define KEY_DOWN '2'
+#define KEY_LEFT '4'
+#define KEY_RIGHT '6'
+#define KEY_UP '8'
+#define KEY_SPACE '9'
 
 
 #define MAX_CLNT 2
@@ -31,7 +31,7 @@ struct KEY {
 
 #pragma pack(push,1)
 struct CHero {
-    short x, y;
+    short x;
     bool connect;
     short id;
     RECT rc;
@@ -142,12 +142,6 @@ void KeyMessage(const char* key, CHero& hero)
         cout << hero.x << endl;
         hero.x -= 5;
     }
-
-    else if (KEY_SPACE == *key) 
-    {
-        cout << hero.y << endl;
-        hero.y -= 5;
-    }
 }
 
 int main(int argc, char* argv[])
@@ -213,7 +207,7 @@ int main(int argc, char* argv[])
         clientSocks[clientCount] = client_sock;
         //hero[clientCount].connect = true;
         //hero[clientCount].id = clientCount;
-        hero[clientCount] = CHero{ 0,400,true,(short)clientCount,NULL };
+        hero[clientCount] = CHero{ 0,true,(short)clientCount,NULL };
         hero[clientCount].id = clientCount;
         send(clientSocks[clientCount], (char*)&hero[clientCount], sizeof(CHero), 0);
 
@@ -247,8 +241,8 @@ DWORD WINAPI Client_Thread(LPVOID arg)
         hThread2 = CreateThread(NULL, 0, Operation_Thread, (LPVOID)&clientSock, 0, NULL);
         recv(clientSock, (char*)&keyInfo, sizeof(KEY), 0);
 
-        SetEvent(hOperEvent);
     }
+        SetEvent(hOperEvent);
 
     closesocket(clientSock);//소켓을 종료한다.
     return 0;
@@ -259,10 +253,19 @@ DWORD WINAPI Operation_Thread(LPVOID arg)
     SOCKET clientSock = *((SOCKET*)arg); //매개변수로받은 클라이언트 소켓을 전달
     WaitForSingleObject(hOperEvent, INFINITE);
     memcpy(buf, (char*)&hero, sizeof(hero));
+    for (int i = 0; i < 2; ++i) {
 
     KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
 
     send(clientSock, buf, sizeof(hero), 0);
+        if (hero[i].id == 0) {
+            KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
+        }
+
+        if (hero[i].id == 1) {
+            KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
+        }
+    }
     SetEvent(hReadEvent);
     return 0;
 }
