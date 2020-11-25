@@ -256,9 +256,12 @@ DWORD WINAPI Operation_Thread(LPVOID arg)
     for (int i = 0; i < 2; ++i) {
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     KeyMessage(&keyInfo.cKey, hero[keyInfo.id]);
 
     send(clientSock, buf, sizeof(hero), 0);
+=======
+>>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 =======
 >>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
         if (hero[i].id == 0) {

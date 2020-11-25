@@ -20,8 +20,11 @@ using namespace std;
 #define KEY_RIGHT '6'
 #define KEY_UP '8'
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 #define bulletMax 10
+=======
+>>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 =======
 >>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 
@@ -226,7 +229,10 @@ void err_display(char* msg)
 #pragma endregion ���� ��� �κ�
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 =======
 >>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 void ImgLoad() {
@@ -237,10 +243,13 @@ void ImgLoad() {
     heroimg.Load(TEXT("hero.png"));
     heroimg2.Load(TEXT("hero2.png"));
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     for (int i = 0; i < bulletMax; ++i) {
         hbullet[i].img.Load(TEXT("bullet.png"));
     }
+=======
+>>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 =======
 >>>>>>> parent of ee82caf... 플레이어마다 각자 총알 생성
 }
